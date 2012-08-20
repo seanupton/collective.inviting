@@ -4,6 +4,8 @@ from Products.CMFCore.utils import getToolByName
 
 from collective.subscribe.interfaces import ISubscriptionKeys
 from collective.inviting.interfaces import IContentSubscribers
+from collective.inviting.adapters import getuid
+from subscribers import EventAuxilliaryView
 
 
 VIEW_TRAVERSAL_NAME = '@@status' #should match ZCML browser:page registration
@@ -48,7 +50,7 @@ class RSVPRedirect(object):
         self.request.response.redirect('%s?token=%s' % (view_url, token))
 
 
-class RSVP(object):
+class RSVP(EventAuxilliaryView):
     """ RSVP confirm / decline view: user clicks button indicating status"""
 
     def __init__(self, context, request):
@@ -73,7 +75,7 @@ class RSVP(object):
         None if no UID does not match context.
         """
         relname, signature, uid = self.subkeys[self.token]
-        if self.context.UID() != uid:
+        if getuid(self.context) != uid:
             self.user_message = self.error()
             return None
         return relname, signature, uid
@@ -111,6 +113,7 @@ class RSVP(object):
         self.user_message = 'You have been confirmed for this event.'
     
     def update(self, *args, **kwargs):
+        EventAuxilliaryView.update(self)
         form = self.request.form
         token = form.get('token', None)
         if token is None or token not in self.subkeys:

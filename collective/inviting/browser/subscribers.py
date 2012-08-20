@@ -254,22 +254,14 @@ class SubscribersView(object):
         return self.index(*args, **kwargs)
 
 
-class EventSubscribersView(SubscribersView):
-    """Event-specific subscription view"""
+class EventAuxilliaryView(object):
     
-    def update(self, *args, **kwargs):
-        super(EventSubscribersView, self).update(*args, **kwargs)
+    def update(self):
         self.event_view = queryMultiAdapter(
             (self.context, self.request),
             name='event_view',
             default=None,
             )
-    
-    def indexes(self):
-        _indexes = ['invited', 'confirmed', 'declined', 'attended']
-        catalog_indexes = super(EventSubscribersView, self).indexes()
-        _indexes += [idx for idx in catalog_indexes if idx not in _indexes]
-        return tuple(_indexes)
     
     @property
     def data(self):
@@ -287,4 +279,19 @@ class EventSubscribersView(SubscribersView):
         if self.event_view is None:
             return ()
         return self.event_view.occurrences
+
+
+class EventSubscribersView(SubscribersView, EventAuxilliaryView):
+    """Event-specific subscription view"""
+    
+    def update(self, *args, **kwargs):
+        super(EventSubscribersView, self).update(*args, **kwargs)
+        EventAuxilliaryView.update(self)
+    
+    def indexes(self):
+        _indexes = ['invited', 'confirmed', 'declined', 'attended']
+        catalog_indexes = super(EventSubscribersView, self).indexes()
+        _indexes += [idx for idx in catalog_indexes if idx not in _indexes]
+        return tuple(_indexes)
+    
 

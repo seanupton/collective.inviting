@@ -6,7 +6,7 @@
     <!-- register extension profiles for add-on --> 
     <genericsetup:registerProfile
         name="default"
-        title="collective.intiving: event invitation add-on"
+        title="collective.inviting: event invitation add-on"
         directory="profiles/default"
         description="Plone add-on enabling event invitation, confirmation."
         provides="Products.GenericSetup.interfaces.EXTENSION"
@@ -14,7 +14,7 @@
 
     <genericsetup:registerProfile
         name="pae_dx"
-        title="collective.intiving: actions for plone.app.event Dexterity-based type"
+        title="collective.inviting: actions for plone.app.event Dexterity-based type"
         directory="profiles/pae_dx"
         description="Additional action for plone.app.event.dx.event type."
         provides="Products.GenericSetup.interfaces.EXTENSION"
@@ -22,7 +22,7 @@
 
     <genericsetup:registerProfile
         name="uninstall"
-        title="Uninstall collective.intiving"
+        title="Uninstall collective.inviting"
         directory="profiles/uninstall"
         description="Uninstall event inviation add-on collective.inviting"
         provides="Products.GenericSetup.interfaces.EXTENSION"

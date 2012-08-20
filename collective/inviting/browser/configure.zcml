@@ -3,6 +3,8 @@
   xmlns:browser="http://namespaces.zope.org/browser"
   i18n_domain="collective.inviting">
 
+  <!-- views supporting ATCT ATEvent type: -->
+
   <browser:page
     for="Products.ATContentTypes.interfaces.event.IATEvent"
     name="invitations"
@@ -20,6 +22,31 @@
   
   <browser:page
     for="Products.ATContentTypes.interfaces.event.IATEvent"
+    name="status"
+    class=".rsvp.RSVP"
+    template="rsvp.pt"
+    permission="zope2.View"
+    />
+
+  <!-- views supporting plone.app.event types: -->
+
+  <browser:page
+    for="plone.event.interfaces.IEvent"
+    name="invitations"
+    class=".subscribers.EventSubscribersView"
+    template="event_subscribers.pt"
+    permission="cmf.ModifyPortalContent"
+    />
+  
+  <browser:page
+    for="plone.event.interfaces.IEvent"
+    name="invitation_email"
+    class=".message.InvitationEmail"
+    permission="zope2.View"
+    />
+  
+  <browser:page
+    for="plone.event.interfaces.IEvent"
     name="status"
     class=".rsvp.RSVP"
     template="rsvp.pt"

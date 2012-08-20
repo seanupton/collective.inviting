@@ -5,18 +5,26 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from StringIO import StringIO
 
-import icalendar
 from Acquisition import aq_inner
-from zope.component import queryUtility, getUtility
-from zope.app.component.hooks import getSite
+import icalendar
 from Products.ATContentTypes.lib.calendarsupport import (PRODID, VCS_HEADER,
     VCS_FOOTER, n2rn)
 from Products.CMFCore.interfaces import ISiteRoot
 from Products.CMFCore.utils import getToolByName
+import pytz
+from zope.component import queryUtility, getUtility, getMultiAdapter
+from zope.app.component.hooks import getSite
 
-from collective.subscribe.interfaces import IUIDStrategy
+from collective.inviting.adapters import getuid
 from collective.inviting.interfaces import IMailRecipient
 from collective.inviting.mail import MailRecipient, invitation_sender
+
+try:
+    import plone.app.event.dx as PAE
+    from plone.event.interfaces import IEvent, IEventAccessor
+    HAS_PAE = True
+except ImportError:
+    HAS_PAE = False
 
 
 # Template (format) strings for email invitation messages:
@@ -67,7 +75,7 @@ class InvitationEmail(object):
 
     def _load_state(self):
         self._loaded = True
-        self.uid = IUIDStrategy(self.context).getuid()
+        self.uid = getuid(self.context)
         self.portal = getSite()
         altportal = getSite()
         self.sender = invitation_sender(self.portal)
@@ -106,31 +114,13 @@ class InvitationEmail(object):
         # Subject: header
         message['Subject'] = 'Invitation: %s' % self.context.Title()
     
-    def _vcal(self):
-        """
-        Make vCal file stream for item context. VCS is modified with use
-        of the icalendar library to inject URL to event into the
-        description (generate, then parse, modify, reserialize).
-        Uses: http://codespeak.net/icalendar/
-        """
-        url = self.context.absolute_url()
-        out = StringIO()
-        out.write(VCS_HEADER % { 'prodid' : PRODID })
-        out.write(self.context.getVCal())
-        out.write(VCS_FOOTER)
-        vcs = n2rn(out.getvalue())
-        parsed = icalendar.Event.from_string(vcs)
-        journal = [c for c in parsed.subcomponents
-                    if isinstance(c, icalendar.Journal)]
-        if journal:
-            description = journal[0].get(
-                'description',
-                icalendar.vText(), #default empty, if empty desc in vcs
-                ).format()
-            description = '%s\n\n  More info:\n\n  %s\n\n' % (description, url)
-            journal[0].set('description', description)
-        return str(parsed) #return modified (description) vcs
-    
+    def _ical(self):
+        view = getMultiAdapter(
+            (self.context, self.request),
+            name='ics_view',
+            )
+        return view.get_ical_string()
+     
     def _rsvp_url(self):
         token = self.request.get('token', None)
         if token is None:
@@ -146,16 +136,29 @@ class InvitationEmail(object):
             recipient = self._recipient_from_request()
         message = MIMEMultipart()
         self._set_headers(message, recipient)
+        if HAS_PAE:
+            accessor = IEventAccessor(self.context)
+            timezone = accessor.timezone
+            if not timezone:
+                timezone = pytz.UTC
+            timezone = pytz.timezone(timezone)
+            start = accessor.start.astimezone(timezone)  # localtime of event
+        else:
+            start = self.context.start()
         data = {
             'FROM_NAME' : self.sender.reply_name,
             'FROM_EMAIL' : self.sender.reply_address,
-            'DATE_FORMATTED' : self.timefn(self.context.start(),
-                                         context=aq_inner(self.context),
-                                         request=self.request),
-            'TIME_FORMATTED' : self.timefn(self.context.start(),
-                                         time_only=True,
-                                         context=aq_inner(self.context),
-                                         request=self.request),
+            'DATE_FORMATTED' : self.timefn(
+                start,
+                context=aq_inner(self.context),
+                request=self.request,
+                ),
+            'TIME_FORMATTED' : self.timefn(
+                start,
+                time_only=True,
+                context=aq_inner(self.context),
+                request=self.request,
+                ),
             'ITEM_TITLE' : self.context.Title(),
             'ITEM_DESCRIPTION' : self.context.Description(),
             'ITEM_URL' : self.context.absolute_url(),
@@ -163,12 +166,12 @@ class InvitationEmail(object):
             }
         body = INVITE_EMAIL_BODY % data
         message.attach(MIMEText(body))
-        attachment = MIMEBase('text', 'x-vCalendar')
-        attachment.set_payload(self._vcal()) #data
+        attachment = MIMEBase('text', 'calendar')
+        attachment.set_payload(self._ical()) #data
         encoders.encode_base64(attachment)
         attachment.add_header('Content-Disposition',
                               'attachment',
-                              filename='event.vcs')
+                              filename='event.ics')
         message.attach(attachment)
         return message.as_string()
 

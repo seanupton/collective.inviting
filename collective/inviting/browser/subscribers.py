@@ -5,16 +5,17 @@ try:
 except:
     from rfc822 import AddressList
 
-from zope.component import queryUtility, getUtility, getMultiAdapter
+from zope.component import queryUtility, getUtility, queryMultiAdapter
 from zope.component.interfaces import ComponentLookupError
 from Products.CMFCore.interfaces import ISiteRoot
 
 from Products.CMFCore.utils import getToolByName
 
 from collective.inviting.interfaces import IContentSubscribers
-from collective.subscribe.interfaces import ISubscriptionCatalog, IUIDStrategy
+from collective.subscribe.interfaces import ISubscriptionCatalog
 from collective.subscribe.interfaces import ISubscribers, ISubscriptionKeys
 from collective.inviting.mail import MailRecipient
+from collective.inviting.adapters import getuid
 
 
 # Template (format) strings for email invitation messages:
@@ -34,7 +35,7 @@ class SubscribersView(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.uid = IUIDStrategy(context).getuid()
+        self.uid = getuid(context)
         self._site = getUtility(ISiteRoot)
         self._catalog = queryUtility(ISubscriptionCatalog)
         self._container = queryUtility(ISubscribers)
@@ -161,7 +162,7 @@ class SubscribersView(object):
         if recipient is None:
             return
         self.request.form['token'] = token # passes token to message
-        msg = getMultiAdapter((self.context, self.request),
+        msg = queryMultiAdapter((self.context, self.request),
             name=u'invitation_email')(recipient=recipient)
         if 'nomail' not in self.request.form:
             self._mail.send(msg)
@@ -255,10 +256,35 @@ class SubscribersView(object):
 
 class EventSubscribersView(SubscribersView):
     """Event-specific subscription view"""
-
+    
+    def update(self, *args, **kwargs):
+        super(EventSubscribersView, self).update(*args, **kwargs)
+        self.event_view = queryMultiAdapter(
+            (self.context, self.request),
+            name='event_view',
+            default=None,
+            )
+    
     def indexes(self):
         _indexes = ['invited', 'confirmed', 'declined', 'attended']
         catalog_indexes = super(EventSubscribersView, self).indexes()
         _indexes += [idx for idx in catalog_indexes if idx not in _indexes]
         return tuple(_indexes)
+    
+    @property
+    def data(self):
+        if self.event_view is None:
+            return {}
+        return self.event_view.data
+    
+    def date_for_display(self):
+        if self.event_view is None:
+            return None
+        return self.event_view.date_for_display()
+    
+    @property
+    def occurrences(self):
+        if self.event_view is None:
+            return ()
+        return self.event_view.occurrences
 

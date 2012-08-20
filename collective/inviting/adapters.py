@@ -7,6 +7,14 @@ from collective.inviting.interfaces import IContentSubscribers, ISubscriberItems
 from collective.subscribe.interfaces import (ISubscribers, IItemSubscriber, 
     ISubscriptionCatalog, IUIDStrategy, IItemResolver)
 
+try:
+    import plone.app.event.dx as PAE
+    from plone.uuid.interfaces import IUUID
+    getuid = IUUID
+except ImportError:
+    getuid = lambda context: IUIDStrategy(context).getuid()
+
+
 class ContentSubscribers(object):
     """
     adapter for content item specific context (via adaptation/construction)
@@ -22,7 +30,7 @@ class ContentSubscribers(object):
         
     def __init__(self, context):
         self.context = context
-        self.uid = IUIDStrategy(context).getuid()
+        self.uid = getuid(context)
         self.catalog = queryUtility(ISubscriptionCatalog)
         self.container = queryUtility(ISubscribers)
     
@@ -112,12 +120,12 @@ class SubscriberItems(object):
         Get UID for item, then index in catalog for named subscription
         relationship of adapted subscriber to the item uid
         """
-        uid = IUIDStrategy(item).getuid()
+        uid = getuid(item)
         self.catalog.index(self.signature, uid, names=(name,))
     
     def unindex(self, name, item):
         """ """
-        uid = IUIDStrategy(item).getuid()
+        uid = getuid(item)
         self.catalog.unindex(self.signature, uid, names=(name,))
 
 

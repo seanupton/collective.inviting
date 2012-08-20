@@ -31,6 +31,12 @@
     for="Products.Archetypes.interfaces.IReferenceable"
     />
 
+  <adapter
+    factory=".adapters.ContentSubscribers"
+    provides=".interfaces.IContentSubscribers"
+    for="plone.event.interfaces.IEvent"
+    />
+
   <utility
     factory=".item.ItemResolver"
     provides="collective.subscribe.interfaces.IItemResolver"

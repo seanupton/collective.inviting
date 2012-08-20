@@ -52,8 +52,8 @@ More information:
 
  %(ITEM_URL)s
 
-A vCal file, suitable for adding this event to calendaring software such as
-iCal, Microsoft Outlook, and Google Calendar is attached.
+%(ATTACH_FMT)s file, suitable for adding this event to calendar software
+such as iCal, Microsoft Outlook, and Google Calendar is attached.
 
 --- 
 
@@ -63,6 +63,14 @@ Received this email in error?  Have questions?
  invitation to you (you can reply to this message to do so).
 """
 
+
+def utc_offset_label(dt):
+    offset_delta = dt.tzinfo.utcoffset(dt)
+    offset_sec = (offset_delta.days * 86400 + offset_delta.seconds)
+    offset_mult = abs(offset_sec) / offset_sec  # either 1 or -1
+    offset_h = offset_mult * (abs(offset_sec) / 3600)
+    offset_m = abs(int(((offset_sec / 3600.0) % offset_h) * 60))
+    return 'UTC%02i:%02i' % (offset_h, offset_m)
 
 class InvitationEmail(object):
     """
@@ -190,7 +198,14 @@ class InvitationEmail(object):
             'ITEM_DESCRIPTION' : self.context.Description(),
             'ITEM_URL' : self.context.absolute_url(),
             'RSVP_URL' : self._rsvp_url(),
+            'ATTACH_FMT' : 'A vCal',
             }
+        if HAS_PAE and IEvent.providedBy(self.context):
+            data['ATTACH_FMT'] = 'An iCalendar (.ics)'
+            data['TIME_FORMATTED'] += ' (%s / %s)' % (
+                start.tzinfo.tzname(start),
+                utc_offset_label(start),
+                )
         body = INVITE_EMAIL_BODY % data
         message.attach(MIMEText(body))
         if HAS_PAE and IEvent.providedBy(self.context):

@@ -4,8 +4,30 @@ Changelog
 0.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Moved doc/HISTORY.txt to CHANGES.txt and renamed doc/ to docs/.
+  [seanupton]
 
+- plone.app.event support: Use ics/iCalendar instead of vcs/vCal in 
+  email attachment for plone.app.event based event contexts.
+  [seanupton]
+
+- plone.app.event support: Use IEventAccessor adapter for plone.app.event
+  contexts in message adapter/view.
+  [seanupton]
+
+- plone.app.event support: consolidate gettting UID for AT and non-AT 
+  contexts into collective.inviting.adapters.getuid function.  Used
+  for integration with plone.app.event Dexterity-based event type.
+  [seanupton]
+
+- plone.app.event support: template macro using content-core from
+  event_view in plone.app.event based contexts required definition
+  of some proxy methods on EventSubscribers invitiations view.
+  [seanupton]
+
+- plone.app.event support: distinct setup profile to include action for 
+  invitiations view on plone.app.event.dx.event FTI.
+  [seanupton]
 
 0.1.1 (2012-08-04)
 ------------------

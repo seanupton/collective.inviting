@@ -113,7 +113,32 @@ class InvitationEmail(object):
             message['Reply-to'] = sender.reply_address
         # Subject: header
         message['Subject'] = 'Invitation: %s' % self.context.Title()
-    
+     
+    def _vcal(self):
+        """
+        Make vCal file stream for item context. VCS is modified with use
+        of the icalendar library to inject URL to event into the
+        description (generate, then parse, modify, reserialize).
+        Uses: http://codespeak.net/icalendar/
+        """
+        url = self.context.absolute_url()
+        out = StringIO()
+        out.write(VCS_HEADER % { 'prodid' : PRODID })
+        out.write(self.context.getVCal())
+        out.write(VCS_FOOTER)
+        vcs = n2rn(out.getvalue())
+        parsed = icalendar.Event.from_string(vcs)
+        journal = [c for c in parsed.subcomponents
+                    if isinstance(c, icalendar.Journal)]
+        if journal:
+            description = journal[0].get(
+                'description',
+                icalendar.vText(), #default empty, if empty desc in vcs
+                ).format()
+            description = '%s\n\n  More info:\n\n  %s\n\n' % (description, url)
+            journal[0].set('description', description)
+        return str(parsed) #return modified (description) vcs
+     
     def _ical(self):
         view = getMultiAdapter(
             (self.context, self.request),
@@ -166,12 +191,20 @@ class InvitationEmail(object):
             }
         body = INVITE_EMAIL_BODY % data
         message.attach(MIMEText(body))
-        attachment = MIMEBase('text', 'calendar')
-        attachment.set_payload(self._ical()) #data
-        encoders.encode_base64(attachment)
-        attachment.add_header('Content-Disposition',
-                              'attachment',
-                              filename='event.ics')
+        if HAD_PAE:
+            attachment = MIMEBase('text', 'calendar')
+            attachment.set_payload(self._ical()) #data
+            encoders.encode_base64(attachment)
+            attachment.add_header('Content-Disposition',
+                                  'attachment',
+                                  filename='event.ics')
+        else:
+            attachment = MIMEBase('text', 'x-vCalendar')
+            attachment.set_payload(self._vcal()) #data
+            encoders.encode_base64(attachment)
+            attachment.add_header('Content-Disposition',
+                                  'attachment',
+                                  filename='event.vcs')
         message.attach(attachment)
         return message.as_string()
 

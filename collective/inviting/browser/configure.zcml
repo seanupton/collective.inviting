@@ -19,13 +19,6 @@
     />
   
   <browser:page
-    for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
-    name="status"
-    class=".rsvp.RSVPRedirect"
-    permission="zope2.View"
-    />
-  
-  <browser:page
     for="Products.ATContentTypes.interfaces.event.IATEvent"
     name="status"
     class=".rsvp.RSVP"
@@ -33,4 +26,11 @@
     permission="zope2.View"
     />
 
+  <browser:page
+    for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+    name="status"
+    class=".rsvp.RSVPRedirect"
+    permission="zope2.View"
+    />
+  
 </configure>

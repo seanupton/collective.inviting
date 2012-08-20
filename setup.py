@@ -7,7 +7,7 @@ setup(name='collective.inviting',
       version=version,
       description="Plone add-on for event invitations, confirmation.",
       long_description=open("README.txt").read() + "\n" +
-                       open(os.path.join("doc", "HISTORY.txt")).read(),
+                       open("CHANGES.txt").read(),
       classifiers=[
         "Programming Language :: Python",
         "Framework :: Plone",

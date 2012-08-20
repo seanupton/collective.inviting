@@ -25,6 +25,8 @@ try:
     HAS_PAE = True
 except ImportError:
     HAS_PAE = False
+    from zope.interface import Interface
+    class IEvent(Interface): pass  # dummy, no plone.event.interfaces.IEvent
 
 
 # Template (format) strings for email invitation messages:
@@ -161,7 +163,7 @@ class InvitationEmail(object):
             recipient = self._recipient_from_request()
         message = MIMEMultipart()
         self._set_headers(message, recipient)
-        if HAS_PAE:
+        if HAS_PAE and IEvent.providedBy(self.context):
             accessor = IEventAccessor(self.context)
             timezone = accessor.timezone
             if not timezone:
@@ -191,7 +193,7 @@ class InvitationEmail(object):
             }
         body = INVITE_EMAIL_BODY % data
         message.attach(MIMEText(body))
-        if HAD_PAE:
+        if HAS_PAE and IEvent.providedBy(self.context):
             attachment = MIMEBase('text', 'calendar')
             attachment.set_payload(self._ical()) #data
             encoders.encode_base64(attachment)

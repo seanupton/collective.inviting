@@ -4,6 +4,17 @@ Changelog
 0.2 (unreleased)
 ----------------
 
+- plone.app.event support: fix rsvp view for compatibility (use getuid()
+  for validation, view proxy for template macros).
+  [seanupton]
+
+- Refactor event_view proxy code into distinct mixin class.
+  [seanupton]
+
+- plone.app.event support: include timezone name and UTC offset label
+  in event invitation message body.
+  [seanupton]
+
 - Moved doc/HISTORY.txt to CHANGES.txt and renamed doc/ to docs/.
   [seanupton]
 

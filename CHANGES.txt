@@ -4,6 +4,14 @@ Changelog
 0.2 (unreleased)
 ----------------
 
+- plone.app.event support: message view uses ulocalized_time from 
+  plone.app.event, not from Products.CMFPlone -- this is because there
+  is a DateTime.strftime bug affecting ulocalized_time(), and a workaround
+  exists in plone.app.event.base.ulocalized_time (using strftime() from
+  datetime.datetime() in a new instance of a DateTime subclass).  This
+  is only used when plone.app.event is available.
+  [seanupton]
+
 - plone.app.event support: fix rsvp view for compatibility (use getuid()
   for validation, view proxy for template macros).
   [seanupton]

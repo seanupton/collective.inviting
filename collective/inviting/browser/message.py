@@ -22,6 +22,7 @@ from collective.inviting.mail import MailRecipient, invitation_sender
 try:
     import plone.app.event.dx as PAE
     from plone.event.interfaces import IEvent, IEventAccessor
+    from plone.app.event.base import ulocalized_time
     HAS_PAE = True
 except ImportError:
     HAS_PAE = False
@@ -91,6 +92,8 @@ class InvitationEmail(object):
         self.sender = invitation_sender(self.portal)
         self.localize = getToolByName(self.portal, 'translation_service')
         self.timefn = self.localize.ulocalized_time
+        if HAS_PAE:
+            self.timefn = ulocalized_time  # fixed DateTime timezone bug
     
     def _recipient_from_request(self):
         form = self.request.form

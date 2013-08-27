@@ -1,7 +1,7 @@
 
 from zope.component import adapts
 from zope.interface import implements
-from zope.app.component.hooks import getSite
+from zope.component.hooks import getSite
 from Products.Archetypes.interfaces import IReferenceable
 
 from collective.subscribe.interfaces import IUIDStrategy, IItemResolver

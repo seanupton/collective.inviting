@@ -13,7 +13,7 @@ from Products.CMFCore.interfaces import ISiteRoot
 from Products.CMFCore.utils import getToolByName
 import pytz
 from zope.component import queryUtility, getUtility, getMultiAdapter
-from zope.app.component.hooks import getSite
+from zope.component.hooks import getSite
 
 from collective.inviting.adapters import getuid
 from collective.inviting.interfaces import IMailRecipient

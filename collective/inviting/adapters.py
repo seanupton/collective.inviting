@@ -1,6 +1,6 @@
 from zope.interface import implements
 from zope.component import adapts, queryUtility
-from zope.app.component.hooks import getSite
+from zope.component.hooks import getSite
 from Products.Archetypes.interfaces import IReferenceable
 
 from collective.inviting.interfaces import IContentSubscribers, ISubscriberItems
